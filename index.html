@@ -4,12 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport"
   content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-<title>Darts 301 / 501</title>
+<title>Darts 301 / 501 / 701</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<!-- 横用アイコン -->
 <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180-landscape.png">
 
 <style>
@@ -60,7 +59,7 @@ body{
   height:100%;
 }
 
-.gameRow, .modeRow{ display:flex; gap:12px; align-items:center; }
+.gameRow, .modeRow{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
 .gameRow button, .modeRow button{
   padding:16px 24px;
   border-radius:999px;
@@ -89,9 +88,16 @@ body{
   opacity:0.9;
 }
 .roundBox .num{
-  font-size:5.5rem;
+  font-size:4.8rem;
   font-weight:1000;
   line-height:1;
+}
+.roundBox .sub{
+  margin-top:10px;
+  font-size:1.05rem;
+  color:rgba(230,237,243,.85);
+  font-weight:800;
+  letter-spacing:.12em;
 }
 
 .scoreRow{
@@ -276,12 +282,11 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   text-shadow:3px 3px 10px rgba(0,0,0,.5);
 }
 
-/* 小さめのタブレット対応 */
 @media (max-height:750px){
   .app{gap:18px;}
   .left{gap:16px;}
   .roundBox{padding:24px 20px;}
-  .roundBox .num{font-size:4.5rem;}
+  .roundBox .num{font-size:4.2rem;}
   .scoreCard{padding:20px 18px;}
   .score{font-size:5rem; margin:16px 0;}
   .numGrid button{padding:20px 0; font-size:1.4rem; min-height:60px;}
@@ -290,7 +295,6 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   .overlayCard div{font-size:4.2rem;}
 }
 
-/* 縦向き/小画面は警告 */
 @media (max-width:750px) or (orientation: portrait){
   body::before{
     content:"このアプリはタブレットを横向きにしてご使用ください";
@@ -318,10 +322,11 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   <!-- LEFT -->
   <div class="left">
 
-    <!-- 301/501 切替 -->
+    <!-- 301/501/701 切替 -->
     <div class="gameRow">
       <button id="game301" class="on" type="button">301</button>
       <button id="game501" type="button">501</button>
+      <button id="game701" type="button">701</button>
     </div>
 
     <!-- 1P/2P + RESET -->
@@ -332,8 +337,9 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     </div>
 
     <div class="roundBox">
-      <div class="label">GAME</div>
-      <div id="gameLabel" class="num">301</div>
+      <div class="label">ROUND</div>
+      <div id="round" class="num">1 / 10</div>
+      <div id="gameLabel" class="sub">GAME 301</div>
     </div>
 
     <div class="scoreRow">
@@ -382,13 +388,20 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
 <script>
 (() => {
-  // ===== SETTINGS =====
-  let startScore = 301;     // 301 or 501
+  // ===== RULES (採用ルール) =====
+  // 301：10ラウンド / 501・701：15ラウンド
+  const ROUND_LIMITS = { 301: 10, 501: 15, 701: 15 };
+
   const BULL_VALUE = 50;
+
+  // ===== SETTINGS =====
+  let startScore = 301;
+  let roundLimit = ROUND_LIMITS[startScore];
 
   // ===== STATE =====
   let mode = 1;             // 1 or 2 players
   let player = 0;           // 0 or 1
+  let round = 1;            // 1..roundLimit
   let scores = [startScore, startScore];       // remaining
   let bestRemain = [startScore, startScore];   // smallest remaining
 
@@ -434,9 +447,13 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     // CANCEL用：最初の操作時点のスナップショット
     if (!snapshot){
       snapshot = {
+        startScore,
+        roundLimit,
+        mode,
+        player,
+        round,
         scores: [...scores],
         bestRemain: [...bestRemain],
-        player,
         throwN,
         turn: [...turn],
         pendingBase,
@@ -446,9 +463,7 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
         turnLowTon,
         bustThisTurn,
         finished,
-        turnStartScores: [...turnStartScores],
-        startScore,
-        mode
+        turnStartScores: [...turnStartScores]
       };
     }
   }
@@ -456,21 +471,28 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   function restoreTurn(){
     if(!snapshot) return;
 
+    startScore = snapshot.startScore;
+    roundLimit = snapshot.roundLimit;
+    mode = snapshot.mode;
+    player = snapshot.player;
+    round = snapshot.round;
+
     scores = [...snapshot.scores];
     bestRemain = [...snapshot.bestRemain];
-    player = snapshot.player;
+
     throwN = snapshot.throwN;
     turn = [...snapshot.turn];
+
     pendingBase = null;
     locked = snapshot.locked;
+
     turnSum = snapshot.turnSum;
     turnBull = snapshot.turnBull;
     turnLowTon = snapshot.turnLowTon;
     bustThisTurn = snapshot.bustThisTurn;
+
     finished = snapshot.finished;
     turnStartScores = [...snapshot.turnStartScores];
-    startScore = snapshot.startScore;
-    mode = snapshot.mode;
 
     el("cancelBtn").disabled = true;
     el("nextBtn").disabled = true;
@@ -491,15 +513,42 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     ["sBtn","dBtn","tBtn"].forEach(id=>el(id).classList.toggle("on", id===onId));
   }
 
-  function finishGame(){
+  function finishByRemaining(){
+    finished = true;
+    clearWinnerGlow();
+    clearBustGlow();
+
+    // 規定ラウンド終了：残り点が少ない方が勝ち（同点はDRAW）
+    if(mode === 2){
+      if(scores[0] < scores[1]){
+        el("p1Card").classList.add("winner");
+        showOverlay("TIME UP!  PLAYER 1 WINNER!");
+      }else if(scores[1] < scores[0]){
+        el("p2Card").classList.add("winner");
+        showOverlay("TIME UP!  PLAYER 2 WINNER!");
+      }else{
+        showOverlay("TIME UP!  DRAW");
+      }
+    }else{
+      // 1Pは勝敗ではなく結果表示
+      el("p1Card").classList.add("winner");
+      showOverlay(`TIME UP!  REMAIN ${scores[0]}`);
+    }
+
+    el("nextBtn").disabled = false;
+    el("nextBtn").textContent = "NEXT GAME";
+    el("cancelBtn").disabled = true;
+    update();
+  }
+
+  function finishImmediate(winnerIdx){
     finished = true;
     clearWinnerGlow();
     clearBustGlow();
 
     if(mode === 2){
-      const winner = player; // 0 or 1（0にしたのは現プレイヤー）
-      el(winner === 0 ? "p1Card" : "p2Card").classList.add("winner");
-      showOverlay(`PLAYER ${winner+1} WINNER!`);
+      el(winnerIdx === 0 ? "p1Card" : "p2Card").classList.add("winner");
+      showOverlay(`PLAYER ${winnerIdx+1} WINNER!`);
     }else{
       el("p1Card").classList.add("winner");
       showOverlay("FINISH!");
@@ -508,6 +557,7 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     el("nextBtn").disabled = false;
     el("nextBtn").textContent = "NEXT GAME";
     el("cancelBtn").disabled = true;
+    update();
   }
 
   function startNextGame(){
@@ -515,6 +565,8 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     bestRemain = [startScore, startScore];
 
     player = 0;
+    round = 1;
+
     throwN = 1;
     turn = [null,null,null];
     pendingBase = null;
@@ -571,11 +623,24 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     el("cancelBtn").disabled = true;
     el("nextBtn").disabled = true;
 
-    // ターン交代
+    // 次プレイヤーへ
     if(mode === 2){
       player ^= 1;
+
+      // 2Pでは「P2のターン終了→次がP1」になったタイミングでラウンド+1
+      if(player === 0){
+        round++;
+      }
     }else{
+      // 1Pではターン=ラウンド
+      round++;
       player = 0;
+    }
+
+    // 規定ラウンドを超えたら判定
+    if(round > roundLimit){
+      finishByRemaining();
+      return;
     }
 
     // 次ターン開始スナップ（バースト復帰用）
@@ -595,12 +660,10 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     scores[player] = turnStartScores[player];
     bustThisTurn = true;
 
-    // 視覚的に分かりやすく
     clearBustGlow();
     el(player === 0 ? "p1Card" : "p2Card").classList.add("bust");
     showOverlay(`BUST!!  PLAYER ${player+1}`, "bust");
 
-    // 入力停止（誤タップ防止）
     locked = true;
     pendingBase = null;
 
@@ -613,12 +676,12 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
     update();
 
-    // ★少し間を置いて自動で次ターンへ
+    // 少し間を置いて自動で次ターンへ
     setTimeout(() => {
       if(!finished){
         endTurn(true);
       }
-    }, 900); // 好みで 600〜1200ms くらいに調整OK
+    }, 900);
   }
 
   function applyScore(val){
@@ -644,12 +707,12 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     pendingBase = null;
     el("cancelBtn").disabled = false;
 
-    // ぴったり0 → 即フィニッシュ
+    // ぴったり0 → 即フィニッシュ（この時点で勝者は現プレイヤー）
     if(scores[player] === 0){
       locked = true;
       el("nextBtn").disabled = false;
       update();
-      finishGame();
+      finishImmediate(player);
       return;
     }
 
@@ -698,10 +761,13 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
   function setGame(score){
     startScore = score;
-    el("gameLabel").textContent = String(score);
+    roundLimit = ROUND_LIMITS[score];
+
     el("game301").classList.toggle("on", score === 301);
     el("game501").classList.toggle("on", score === 501);
-    startNextGame(); // 301/501切替時もリセット
+    el("game701").classList.toggle("on", score === 701);
+
+    startNextGame(); // ゲーム切替時もリセット
   }
 
   function formatTurnCell(v){
@@ -710,6 +776,9 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   }
 
   function update(){
+    el("round").textContent = `${round} / ${roundLimit}`;
+    el("gameLabel").textContent = `GAME ${startScore}`;
+
     el("p1Score").textContent = scores[0];
     el("p2Score").textContent = scores[1];
     el("p1High").textContent = `BEST REMAIN : ${bestRemain[0]}`;
@@ -721,6 +790,11 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
     el("mode1").classList.toggle("on", mode===1);
     el("mode2").classList.toggle("on", mode===2);
+
+    // 1PのときはP2のactiveを消す（見た目の一貫）
+    if(mode === 1){
+      el("p2Card").classList.remove("active");
+    }
   }
 
   // ===== BUILD NUMBER GRID =====
@@ -759,11 +833,12 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
   el("game301").onclick = () => setGame(301);
   el("game501").onclick = () => setGame(501);
+  el("game701").onclick = () => setGame(701);
 
   el("reset").onclick = () => location.reload();
 
   // ===== INIT =====
-  setGame(301); // 初期は301
+  setGame(301);
   setMultiUI("sBtn");
 })();
 </script>
