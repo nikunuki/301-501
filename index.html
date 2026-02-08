@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport"
+  content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Darts 301 / 501</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- 横用アイコン -->
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180-landscape.png">
+
+<style>
+:root{
+  --bg0:#070a10; --bg1:#0c1220;
+  --txt:#e6edf3; --muted:#9aa7b6;
+  --blue:#1f6feb; --green:#238636; --red:#c2463a;
+  --gold:#ffd700;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{
+  height:100%;
+  margin:0;
+  overscroll-behavior:none;
+  -webkit-text-size-adjust:100%;
+  overflow:hidden;
+}
+body{
+  background:
+    radial-gradient(900px 600px at 20% 10%, rgba(88,166,255,.18), transparent 60%),
+    linear-gradient(180deg,var(--bg0),var(--bg1));
+  color:var(--txt);
+  font-family:system-ui,-apple-system,sans-serif;
+  padding:20px;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:manipulation;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.app{
+  width:100%;
+  max-width:1400px;
+  height:100%;
+  max-height:900px;
+  display:grid;
+  grid-template-columns:1fr 1.5fr;
+  gap:24px;
+}
+
+/* ===== LEFT ===== */
+.left{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  height:100%;
+}
+
+.gameRow, .modeRow{ display:flex; gap:12px; align-items:center; }
+.gameRow button, .modeRow button{
+  padding:16px 24px;
+  border-radius:999px;
+  font-weight:900;
+  border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  transition:all .2s;
+  font-size:1.1rem;
+}
+.gameRow button:active, .modeRow button:active{transform:scale(.95);}
+.gameRow button.on, .modeRow button.on{background:rgba(31,111,235,.35);}
+.modeRow .reset{background:rgba(194,70,58,.35);}
+
+.roundBox{
+  padding:32px 28px;
+  border-radius:24px;
+  background:linear-gradient(135deg,rgba(31,111,235,.25),rgba(88,166,255,.12));
+  text-align:center;
+}
+.roundBox .label{
+  letter-spacing:.35em;
+  font-weight:900;
+  font-size:1.1rem;
+  margin-bottom:12px;
+  opacity:0.9;
+}
+.roundBox .num{
+  font-size:5.5rem;
+  font-weight:1000;
+  line-height:1;
+}
+
+.scoreRow{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+  flex:1;
+  min-height:0;
+}
+.scoreCard{
+  padding:28px 24px;
+  border-radius:24px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  transition:all .3s;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  font-size:1.1rem;
+  font-weight:700;
+}
+.scoreCard.active{
+  outline:3px solid rgba(88,166,255,.6);
+  background:rgba(31,111,235,.12);
+}
+.score{
+  font-size:6rem;
+  font-weight:1000;
+  line-height:1;
+  margin:20px 0;
+}
+.high{
+  font-size:1rem;
+  color:var(--gold);
+  margin-top:12px;
+  font-weight:600;
+}
+
+/* FINISH時：WINNERだけ金色発光 */
+.scoreCard.winner{
+  border:2px solid var(--gold);
+  box-shadow:
+    0 0 20px rgba(255,215,0,.85),
+    0 0 40px rgba(255,215,0,.65),
+    0 0 80px rgba(255,215,0,.45);
+  animation:winnerPulse 1.6s ease-in-out infinite;
+}
+@keyframes winnerPulse{
+  0%{box-shadow:0 0 18px rgba(255,215,0,.6)}
+  50%{box-shadow:0 0 45px rgba(255,215,0,1)}
+  100%{box-shadow:0 0 18px rgba(255,215,0,.6)}
+}
+
+/* BUST演出：カードを赤くフラッシュ＆揺らす */
+.scoreCard.bust{
+  outline:3px solid rgba(194,70,58,.85);
+  background:rgba(194,70,58,.12);
+  animation:bustShake .35s ease-in-out 0s 2;
+}
+@keyframes bustShake{
+  0%{transform:translateX(0)}
+  25%{transform:translateX(-8px)}
+  50%{transform:translateX(8px)}
+  75%{transform:translateX(-6px)}
+  100%{transform:translateX(0)}
+}
+
+/* ===== RIGHT ===== */
+.right{
+  display:grid;
+  grid-template-rows:auto 1fr auto auto;
+  gap:18px;
+  height:100%;
+}
+
+.turnBox{
+  display:flex;
+  justify-content:space-between;
+  padding:16px 24px;
+  border-radius:20px;
+  background:rgba(0,0,0,.25);
+  font-weight:700;
+  font-size:1.1rem;
+}
+
+.numGrid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:14px;
+  align-content:start;
+}
+.numGrid button{
+  padding:24px 0;
+  border-radius:20px;
+  font-size:1.6rem;
+  font-weight:1000;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.2);
+  color:#fff;
+  transition:all .15s;
+  min-height:70px;
+}
+.numGrid button:active{
+  transform:scale(.92);
+  background:rgba(255,255,255,.18);
+}
+.numGrid .bull{background:rgba(210,153,34,.45);}
+.numGrid .miss{background:rgba(48,54,61,.6);}
+
+.multi{ display:flex; gap:14px; }
+.multi button{
+  flex:1;
+  padding:22px 18px;
+  border-radius:999px;
+  font-weight:1000;
+  border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  transition:all .2s;
+  font-size:1.1rem;
+  min-height:70px;
+}
+.multi button:active{transform:scale(.95);}
+#sBtn{ background:rgba(35,134,54,.22); border-color:rgba(35,134,54,.35); }
+#dBtn{ background:rgba(31,111,235,.22); border-color:rgba(31,111,235,.35); }
+#tBtn{ background:rgba(194,70,58,.22); border-color:rgba(194,70,58,.35); }
+#sBtn.on{ background:var(--green); border-color:var(--green); box-shadow:0 0 16px rgba(35,134,54,.6); }
+#dBtn.on{ background:var(--blue);  border-color:var(--blue);  box-shadow:0 0 16px rgba(31,111,235,.6); }
+#tBtn.on{ background:var(--red);   border-color:var(--red);   box-shadow:0 0 16px rgba(194,70,58,.6); }
+
+.actions{
+  display:flex;
+  gap:16px;
+  justify-content:center;
+}
+.actions button{
+  padding:26px 40px;
+  border-radius:999px;
+  font-weight:900;
+  border:1px solid rgba(255,255,255,.2);
+  color:#fff;
+  min-width:240px;
+  min-height:80px;
+  font-size:1.3rem;
+  transition:all .2s;
+}
+.actions button:active:not(:disabled){transform:scale(.96);}
+.actions .cancel{ background:rgba(255,255,255,.18); }
+.actions .next{ background:rgba(31,111,235,.35); }
+button:disabled{ opacity:.45; cursor:not-allowed; }
+
+/* ===== OVERLAY（演出 3秒） ===== */
+.overlay{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,.85);
+  z-index:9999;
+}
+.overlay.on{display:flex;}
+.overlayCard{
+  padding:48px 60px;
+  border-radius:32px;
+  background:linear-gradient(135deg,#ffd700,#ff00d4);
+  animation:pop .5s ease-out;
+  text-align:center;
+}
+.overlayCard.bust{
+  background:linear-gradient(135deg,#ff3b30,#ff00d4);
+}
+@keyframes pop{
+  from{transform:scale(.3);opacity:0}
+  to{transform:scale(1);opacity:1}
+}
+.overlayCard div{
+  font-size:5rem;
+  font-weight:1000;
+  color:#fff;
+  text-shadow:3px 3px 10px rgba(0,0,0,.5);
+}
+
+/* 小さめのタブレット対応 */
+@media (max-height:750px){
+  .app{gap:18px;}
+  .left{gap:16px;}
+  .roundBox{padding:24px 20px;}
+  .roundBox .num{font-size:4.5rem;}
+  .scoreCard{padding:20px 18px;}
+  .score{font-size:5rem; margin:16px 0;}
+  .numGrid button{padding:20px 0; font-size:1.4rem; min-height:60px;}
+  .multi button{padding:18px 16px; min-height:60px;}
+  .actions button{padding:22px 36px; min-height:70px; font-size:1.2rem;}
+  .overlayCard div{font-size:4.2rem;}
+}
+
+/* 縦向き/小画面は警告 */
+@media (max-width:750px) or (orientation: portrait){
+  body::before{
+    content:"このアプリはタブレットを横向きにしてご使用ください";
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--bg0);
+    color:var(--txt);
+    font-size:1.5rem;
+    font-weight:700;
+    text-align:center;
+    padding:40px;
+    z-index:10000;
+  }
+  .app{display:none;}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <!-- LEFT -->
+  <div class="left">
+
+    <!-- 301/501 切替 -->
+    <div class="gameRow">
+      <button id="game301" class="on" type="button">301</button>
+      <button id="game501" type="button">501</button>
+    </div>
+
+    <!-- 1P/2P + RESET -->
+    <div class="modeRow">
+      <button id="mode1" class="on" type="button">1 PLAYER</button>
+      <button id="mode2" type="button">2 PLAYERS</button>
+      <button id="reset" class="reset" type="button">RESET</button>
+    </div>
+
+    <div class="roundBox">
+      <div class="label">GAME</div>
+      <div id="gameLabel" class="num">301</div>
+    </div>
+
+    <div class="scoreRow">
+      <div id="p1Card" class="scoreCard active">
+        PLAYER 1
+        <div id="p1Score" class="score">301</div>
+        <div id="p1High" class="high">BEST REMAIN : 301</div>
+      </div>
+      <div id="p2Card" class="scoreCard">
+        PLAYER 2
+        <div id="p2Score" class="score">301</div>
+        <div id="p2High" class="high">BEST REMAIN : 301</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="turnBox">
+      <div>THIS TURN</div>
+      <div id="hist">— — —</div>
+    </div>
+
+    <div class="numGrid" id="numGrid"></div>
+
+    <div class="multi">
+      <button id="sBtn" class="on" type="button">SINGLE ×1</button>
+      <button id="dBtn" type="button">DOUBLE ×2</button>
+      <button id="tBtn" type="button">TRIPLE ×3</button>
+    </div>
+
+    <div class="actions">
+      <button id="cancelBtn" class="cancel" disabled type="button">CANCEL</button>
+      <button id="nextBtn" class="next" disabled type="button">NEXT</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- overlay -->
+<div id="overlay" class="overlay">
+  <div id="overlayCard" class="overlayCard">
+    <div id="ovText">LOW TON!!</div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ===== SETTINGS =====
+  let startScore = 301;     // 301 or 501
+  const BULL_VALUE = 50;
+
+  // ===== STATE =====
+  let mode = 1;             // 1 or 2 players
+  let player = 0;           // 0 or 1
+  let scores = [startScore, startScore];       // remaining
+  let bestRemain = [startScore, startScore];   // smallest remaining
+
+  // turn state
+  let throwN = 1;
+  let turn = [null, null, null];
+  let pendingBase = null;
+  let locked = false;
+  let snapshot = null;
+
+  // per-turn flags
+  let turnSum = 0;          // scored this turn (reduction)
+  let turnBull = false;
+  let turnLowTon = false;
+  let bustThisTurn = false;
+
+  // for bust rollback (start-of-turn remaining)
+  let turnStartScores = [startScore, startScore];
+
+  // finished flag
+  let finished = false;
+
+  const el = id => document.getElementById(id);
+
+  function showOverlay(text, kind="normal"){
+    el("ovText").textContent = text;
+    el("overlayCard").classList.toggle("bust", kind === "bust");
+    el("overlay").classList.add("on");
+    setTimeout(() => el("overlay").classList.remove("on"), 3000);
+  }
+
+  function clearWinnerGlow(){
+    el("p1Card").classList.remove("winner");
+    el("p2Card").classList.remove("winner");
+  }
+
+  function clearBustGlow(){
+    el("p1Card").classList.remove("bust");
+    el("p2Card").classList.remove("bust");
+  }
+
+  function takeSnapshotIfNeeded(){
+    // CANCEL用：最初の操作時点のスナップショット
+    if (!snapshot){
+      snapshot = {
+        scores: [...scores],
+        bestRemain: [...bestRemain],
+        player,
+        throwN,
+        turn: [...turn],
+        pendingBase,
+        locked,
+        turnSum,
+        turnBull,
+        turnLowTon,
+        bustThisTurn,
+        finished,
+        turnStartScores: [...turnStartScores],
+        startScore,
+        mode
+      };
+    }
+  }
+
+  function restoreTurn(){
+    if(!snapshot) return;
+
+    scores = [...snapshot.scores];
+    bestRemain = [...snapshot.bestRemain];
+    player = snapshot.player;
+    throwN = snapshot.throwN;
+    turn = [...snapshot.turn];
+    pendingBase = null;
+    locked = snapshot.locked;
+    turnSum = snapshot.turnSum;
+    turnBull = snapshot.turnBull;
+    turnLowTon = snapshot.turnLowTon;
+    bustThisTurn = snapshot.bustThisTurn;
+    finished = snapshot.finished;
+    turnStartScores = [...snapshot.turnStartScores];
+    startScore = snapshot.startScore;
+    mode = snapshot.mode;
+
+    el("cancelBtn").disabled = true;
+    el("nextBtn").disabled = true;
+    el("nextBtn").textContent = "NEXT";
+
+    snapshot = null;
+    clearWinnerGlow();
+    clearBustGlow();
+    setMultiUI("sBtn");
+    update();
+  }
+
+  function setTurnStartSnapshot(){
+    turnStartScores = [...scores];
+  }
+
+  function setMultiUI(onId){
+    ["sBtn","dBtn","tBtn"].forEach(id=>el(id).classList.toggle("on", id===onId));
+  }
+
+  function finishGame(){
+    finished = true;
+    clearWinnerGlow();
+    clearBustGlow();
+
+    if(mode === 2){
+      const winner = player; // 0 or 1（0にしたのは現プレイヤー）
+      el(winner === 0 ? "p1Card" : "p2Card").classList.add("winner");
+      showOverlay(`PLAYER ${winner+1} WINNER!`);
+    }else{
+      el("p1Card").classList.add("winner");
+      showOverlay("FINISH!");
+    }
+
+    el("nextBtn").disabled = false;
+    el("nextBtn").textContent = "NEXT GAME";
+    el("cancelBtn").disabled = true;
+  }
+
+  function startNextGame(){
+    scores = [startScore, startScore];
+    bestRemain = [startScore, startScore];
+
+    player = 0;
+    throwN = 1;
+    turn = [null,null,null];
+    pendingBase = null;
+    locked = false;
+    snapshot = null;
+
+    turnSum = 0;
+    turnBull = false;
+    turnLowTon = false;
+    bustThisTurn = false;
+
+    finished = false;
+    clearWinnerGlow();
+    clearBustGlow();
+
+    setTurnStartSnapshot();
+
+    el("nextBtn").textContent = "NEXT";
+    el("nextBtn").disabled = true;
+    el("cancelBtn").disabled = true;
+
+    setMultiUI("sBtn");
+    update();
+  }
+
+  // ★ターン終了処理（手動NEXT／バースト自動送り共通）
+  function endTurn(auto=false){
+    if(finished){
+      startNextGame();
+      return;
+    }
+    if(!locked && !auto) return;
+
+    // bustは既に演出済みなので通常演出のみ
+    if(!bustThisTurn){
+      if(turnLowTon) showOverlay("LOW TON!!");
+      else if(turnBull) showOverlay("Nice One!!");
+    }
+
+    snapshot = null;
+    pendingBase = null;
+    locked = false;
+
+    throwN = 1;
+    turn = [null,null,null];
+
+    turnSum = 0;
+    turnBull = false;
+    turnLowTon = false;
+    bustThisTurn = false;
+
+    clearBustGlow();
+
+    el("cancelBtn").disabled = true;
+    el("nextBtn").disabled = true;
+
+    // ターン交代
+    if(mode === 2){
+      player ^= 1;
+    }else{
+      player = 0;
+    }
+
+    // 次ターン開始スナップ（バースト復帰用）
+    setTurnStartSnapshot();
+
+    setMultiUI("sBtn");
+    update();
+  }
+
+  function nextTurn(){
+    endTurn(false);
+  }
+
+  // ★バースト：演出→自動で次プレイヤーへ進む
+  function bustNow(){
+    // スコアをターン開始に戻す
+    scores[player] = turnStartScores[player];
+    bustThisTurn = true;
+
+    // 視覚的に分かりやすく
+    clearBustGlow();
+    el(player === 0 ? "p1Card" : "p2Card").classList.add("bust");
+    showOverlay(`BUST!!  PLAYER ${player+1}`, "bust");
+
+    // 入力停止（誤タップ防止）
+    locked = true;
+    pendingBase = null;
+
+    // THIS TURN表示
+    turn = ["BUST", null, null];
+    throwN = 4;
+
+    el("cancelBtn").disabled = true;
+    el("nextBtn").disabled = true;
+
+    update();
+
+    // ★少し間を置いて自動で次ターンへ
+    setTimeout(() => {
+      if(!finished){
+        endTurn(true);
+      }
+    }, 900); // 好みで 600〜1200ms くらいに調整OK
+  }
+
+  function applyScore(val){
+    const nextRemain = scores[player] - val;
+
+    // BUST：0未満になったらバースト（シングルアウトOK）
+    if(nextRemain < 0){
+      bustNow();
+      return;
+    }
+
+    // 正常反映
+    scores[player] = nextRemain;
+    bestRemain[player] = Math.min(bestRemain[player], scores[player]);
+
+    turn[throwN - 1] = val;
+    throwN++;
+
+    turnSum += val;
+    if(val === BULL_VALUE) turnBull = true;
+    if(turnSum > 100) turnLowTon = true;
+
+    pendingBase = null;
+    el("cancelBtn").disabled = false;
+
+    // ぴったり0 → 即フィニッシュ
+    if(scores[player] === 0){
+      locked = true;
+      el("nextBtn").disabled = false;
+      update();
+      finishGame();
+      return;
+    }
+
+    if(throwN > 3){
+      locked = true;
+      el("nextBtn").disabled = false;
+    }
+
+    setMultiUI("sBtn");
+    update();
+  }
+
+  function pickNumber(base, kind){
+    if(finished) return;
+    if(locked) return;
+
+    takeSnapshotIfNeeded();
+
+    if(kind === "BULL"){
+      applyScore(BULL_VALUE);
+      return;
+    }
+    if(kind === "MISS"){
+      applyScore(0);
+      return;
+    }
+
+    pendingBase = base;
+    el("cancelBtn").disabled = false;
+  }
+
+  function applyMultiplier(m){
+    if(finished) return;
+    if(locked) return;
+    if(pendingBase == null) return;
+    applyScore(pendingBase * m);
+  }
+
+  function setMode(m){
+    mode = m;
+    player = 0;
+    clearWinnerGlow();
+    clearBustGlow();
+    startNextGame(); // 切替時は分かりやすくリセット
+  }
+
+  function setGame(score){
+    startScore = score;
+    el("gameLabel").textContent = String(score);
+    el("game301").classList.toggle("on", score === 301);
+    el("game501").classList.toggle("on", score === 501);
+    startNextGame(); // 301/501切替時もリセット
+  }
+
+  function formatTurnCell(v){
+    if(v === "BUST") return "BUST";
+    return (v ?? "—");
+  }
+
+  function update(){
+    el("p1Score").textContent = scores[0];
+    el("p2Score").textContent = scores[1];
+    el("p1High").textContent = `BEST REMAIN : ${bestRemain[0]}`;
+    el("p2High").textContent = `BEST REMAIN : ${bestRemain[1]}`;
+    el("hist").textContent = turn.map(formatTurnCell).join(" ");
+
+    el("p1Card").classList.toggle("active", player===0);
+    el("p2Card").classList.toggle("active", player===1 && mode===2);
+
+    el("mode1").classList.toggle("on", mode===1);
+    el("mode2").classList.toggle("on", mode===2);
+  }
+
+  // ===== BUILD NUMBER GRID =====
+  const g = el("numGrid");
+  for(let i=1;i<=20;i++){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = i;
+    b.onclick = () => pickNumber(i, "NUM");
+    g.appendChild(b);
+  }
+  const miss = document.createElement("button");
+  miss.type = "button";
+  miss.textContent = "MISS";
+  miss.className = "miss";
+  miss.onclick = () => pickNumber(0, "MISS");
+  g.appendChild(miss);
+
+  const bull = document.createElement("button");
+  bull.type = "button";
+  bull.textContent = "BULL";
+  bull.className = "bull";
+  bull.onclick = () => pickNumber(BULL_VALUE, "BULL");
+  g.appendChild(bull);
+
+  // ===== WIRE =====
+  el("sBtn").onclick = () => { setMultiUI("sBtn"); applyMultiplier(1); };
+  el("dBtn").onclick = () => { setMultiUI("dBtn"); applyMultiplier(2); };
+  el("tBtn").onclick = () => { setMultiUI("tBtn"); applyMultiplier(3); };
+
+  el("cancelBtn").onclick = restoreTurn;
+  el("nextBtn").onclick = nextTurn;
+
+  el("mode1").onclick = () => setMode(1);
+  el("mode2").onclick = () => setMode(2);
+
+  el("game301").onclick = () => setGame(301);
+  el("game501").onclick = () => setGame(501);
+
+  el("reset").onclick = () => location.reload();
+
+  // ===== INIT =====
+  setGame(301); // 初期は301
+  setMultiUI("sBtn");
+})();
+</script>
+</body>
+</html>
