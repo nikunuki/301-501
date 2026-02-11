@@ -1,13 +1,16 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport"
   content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-<title>Darts 301 / 501 / 701</title>
+<title>Darts 301 / 501</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- 横用アイコン -->
 
 <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180-landscape.png">
 
@@ -59,7 +62,7 @@ body{
   height:100%;
 }
 
-.gameRow, .modeRow{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.gameRow, .modeRow{ display:flex; gap:12px; align-items:center; }
 .gameRow button, .modeRow button{
   padding:16px 24px;
   border-radius:999px;
@@ -88,16 +91,9 @@ body{
   opacity:0.9;
 }
 .roundBox .num{
-  font-size:4.8rem;
+  font-size:5.5rem;
   font-weight:1000;
   line-height:1;
-}
-.roundBox .sub{
-  margin-top:10px;
-  font-size:1.05rem;
-  color:rgba(230,237,243,.85);
-  font-weight:800;
-  letter-spacing:.12em;
 }
 
 .scoreRow{
@@ -128,7 +124,16 @@ body{
   font-size:6rem;
   font-weight:1000;
   line-height:1;
-  margin:20px 0;
+  margin:20px 0 8px 0;
+}
+.bestRoute{
+  font-size:1.4rem;
+  color:#58a6ff;
+  margin:8px 0;
+  font-weight:900;
+  letter-spacing:0.05em;
+  text-align:center;
+  text-shadow:0 0 8px rgba(88,166,255,.5);
 }
 .high{
   font-size:1rem;
@@ -282,19 +287,22 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   text-shadow:3px 3px 10px rgba(0,0,0,.5);
 }
 
+/* 小さめのタブレット対応 */
 @media (max-height:750px){
   .app{gap:18px;}
   .left{gap:16px;}
   .roundBox{padding:24px 20px;}
-  .roundBox .num{font-size:4.2rem;}
+  .roundBox .num{font-size:4.5rem;}
   .scoreCard{padding:20px 18px;}
   .score{font-size:5rem; margin:16px 0;}
+  .bestRoute{font-size:1.2rem;}
   .numGrid button{padding:20px 0; font-size:1.4rem; min-height:60px;}
   .multi button{padding:18px 16px; min-height:60px;}
   .actions button{padding:22px 36px; min-height:70px; font-size:1.2rem;}
   .overlayCard div{font-size:4.2rem;}
 }
 
+/* 縦向き/小画面は警告 */
 @media (max-width:750px) or (orientation: portrait){
   body::before{
     content:"このアプリはタブレットを横向きにしてご使用ください";
@@ -314,72 +322,82 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   .app{display:none;}
 }
 </style>
+
 </head>
 
 <body>
 <div class="app">
 
   <!-- LEFT -->
+
   <div class="left">
 
-    <!-- 301/501/701 切替 -->
-    <div class="gameRow">
-      <button id="game301" class="on" type="button">301</button>
-      <button id="game501" type="button">501</button>
-      <button id="game701" type="button">701</button>
-    </div>
+```
+<!-- 301/501 切替 -->
+<div class="gameRow">
+  <button id="game301" class="on" type="button">301</button>
+  <button id="game501" type="button">501</button>
+</div>
 
-    <!-- 1P/2P + RESET -->
-    <div class="modeRow">
-      <button id="mode1" class="on" type="button">1 PLAYER</button>
-      <button id="mode2" type="button">2 PLAYERS</button>
-      <button id="reset" class="reset" type="button">RESET</button>
-    </div>
+<!-- 1P/2P + RESET -->
+<div class="modeRow">
+  <button id="mode1" class="on" type="button">1 PLAYER</button>
+  <button id="mode2" type="button">2 PLAYERS</button>
+  <button id="reset" class="reset" type="button">RESET</button>
+</div>
 
-    <div class="roundBox">
-      <div class="label">ROUND</div>
-      <div id="round" class="num">1 / 10</div>
-      <div id="gameLabel" class="sub">GAME 301</div>
-    </div>
+<div class="roundBox">
+  <div class="label">GAME</div>
+  <div id="gameLabel" class="num">301</div>
+</div>
 
-    <div class="scoreRow">
-      <div id="p1Card" class="scoreCard active">
-        PLAYER 1
-        <div id="p1Score" class="score">301</div>
-        <div id="p1High" class="high">BEST REMAIN : 301</div>
-      </div>
-      <div id="p2Card" class="scoreCard">
-        PLAYER 2
-        <div id="p2Score" class="score">301</div>
-        <div id="p2High" class="high">BEST REMAIN : 301</div>
-      </div>
-    </div>
+<div class="scoreRow">
+  <div id="p1Card" class="scoreCard active">
+    PLAYER 1
+    <div id="p1Score" class="score">301</div>
+    <div id="p1Route" class="bestRoute">—</div>
+    <div id="p1High" class="high">BEST REMAIN : 301</div>
+  </div>
+  <div id="p2Card" class="scoreCard">
+    PLAYER 2
+    <div id="p2Score" class="score">301</div>
+    <div id="p2Route" class="bestRoute">—</div>
+    <div id="p2High" class="high">BEST REMAIN : 301</div>
+  </div>
+</div>
+```
+
   </div>
 
   <!-- RIGHT -->
+
   <div class="right">
     <div class="turnBox">
       <div>THIS TURN</div>
       <div id="hist">— — —</div>
     </div>
 
-    <div class="numGrid" id="numGrid"></div>
+```
+<div class="numGrid" id="numGrid"></div>
 
-    <div class="multi">
-      <button id="sBtn" class="on" type="button">SINGLE ×1</button>
-      <button id="dBtn" type="button">DOUBLE ×2</button>
-      <button id="tBtn" type="button">TRIPLE ×3</button>
-    </div>
+<div class="multi">
+  <button id="sBtn" class="on" type="button">SINGLE ×1</button>
+  <button id="dBtn" type="button">DOUBLE ×2</button>
+  <button id="tBtn" type="button">TRIPLE ×3</button>
+</div>
 
-    <div class="actions">
-      <button id="cancelBtn" class="cancel" disabled type="button">CANCEL</button>
-      <button id="nextBtn" class="next" disabled type="button">NEXT</button>
-    </div>
+<div class="actions">
+  <button id="cancelBtn" class="cancel" disabled type="button">CANCEL</button>
+  <button id="nextBtn" class="next" disabled type="button">NEXT</button>
+</div>
+```
+
   </div>
 
 </div>
 
 <!-- overlay -->
+
 <div id="overlay" class="overlay">
   <div id="overlayCard" class="overlayCard">
     <div id="ovText">LOW TON!!</div>
@@ -388,22 +406,15 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
 <script>
 (() => {
-  // ===== RULES (採用ルール) =====
-  // 301：10ラウンド / 501・701：15ラウンド
-  const ROUND_LIMITS = { 301: 10, 501: 15, 701: 15 };
-
-  const BULL_VALUE = 50;
-
   // ===== SETTINGS =====
   let startScore = 301;
-  let roundLimit = ROUND_LIMITS[startScore];
+  const BULL_VALUE = 50;
 
   // ===== STATE =====
-  let mode = 1;             // 1 or 2 players
-  let player = 0;           // 0 or 1
-  let round = 1;            // 1..roundLimit
-  let scores = [startScore, startScore];       // remaining
-  let bestRemain = [startScore, startScore];   // smallest remaining
+  let mode = 1;
+  let player = 0;
+  let scores = [startScore, startScore];
+  let bestRemain = [startScore, startScore];
 
   // turn state
   let throwN = 1;
@@ -413,18 +424,99 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   let snapshot = null;
 
   // per-turn flags
-  let turnSum = 0;          // scored this turn (reduction)
+  let turnSum = 0;
   let turnBull = false;
   let turnLowTon = false;
   let bustThisTurn = false;
 
-  // for bust rollback (start-of-turn remaining)
   let turnStartScores = [startScore, startScore];
-
-  // finished flag
   let finished = false;
 
   const el = id => document.getElementById(id);
+
+  // ===== BEST ROUTE CALCULATOR =====
+  function calculateBestRoute(remaining) {
+    if (remaining > 180) return "—";
+    if (remaining === 0) return "FINISH!";
+
+    // T20 = 60, BULL = 50, D20 = 40, S20 = 20
+    const routes = [];
+
+    // 1投で上がれる
+    if (remaining === 50) return "BULL";
+    if (remaining === 60) return "T20";
+    if (remaining === 40) return "D20";
+    if (remaining === 20) return "S20";
+    if (remaining <= 20 && remaining % 2 === 0) return `D${remaining/2}`;
+    if (remaining <= 20) return `S${remaining}`;
+
+    // 2投で上がれる
+    if (remaining === 110) return "T20 + BULL";
+    if (remaining === 120) return "T20 × 2";
+    if (remaining === 100) return "BULL × 2";
+    if (remaining === 80) return "D20 × 2";
+    if (remaining === 70) return "T20 + S10";
+
+    // T20 + 残り
+    if (remaining > 60 && remaining <= 120) {
+      const rest = remaining - 60;
+      if (rest === 50) return "T20 + BULL";
+      if (rest === 60) return "T20 × 2";
+      if (rest === 40) return "T20 + D20";
+      if (rest <= 40) return `T20 + D${rest/2}`;
+      return `T20 + ${rest}`;
+    }
+
+    // BULL + 残り
+    if (remaining > 50 && remaining <= 100) {
+      const rest = remaining - 50;
+      if (rest === 50) return "BULL × 2";
+      if (rest === 60) return "BULL + T20";
+      if (rest === 40) return "BULL + D20";
+      if (rest <= 40 && rest % 2 === 0) return `BULL + D${rest/2}`;
+      return `BULL + ${rest}`;
+    }
+
+    // 3投で上がれる（180点まで）
+    if (remaining === 180) return "T20 × 3";
+    if (remaining === 170) return "T20 × 2 + BULL";
+    if (remaining === 160) return "T20 × 2 + D20";
+    if (remaining === 150) return "T20 + BULL × 2";
+    if (remaining === 140) return "T20 × 2 + S20";
+    if (remaining === 130) return "T20 + BULL + S20";
+
+    // T20×2 + 残り
+    const t20x2Rest = remaining - 120;
+    if (t20x2Rest > 0 && t20x2Rest <= 60) {
+      if (t20x2Rest === 50) return "T20 × 2 + BULL";
+      if (t20x2Rest === 60) return "T20 × 3";
+      if (t20x2Rest === 40) return "T20 × 2 + D20";
+      if (t20x2Rest <= 40 && t20x2Rest % 2 === 0) return `T20 × 2 + D${t20x2Rest/2}`;
+      return `T20 × 2 + ${t20x2Rest}`;
+    }
+
+    // T20 + BULL + 残り
+    const t20BullRest = remaining - 110;
+    if (t20BullRest > 0 && t20BullRest <= 70) {
+      if (t20BullRest === 60) return "T20 × 2 + BULL";
+      if (t20BullRest === 50) return "T20 + BULL × 2";
+      if (t20BullRest === 40) return "T20 + BULL + D20";
+      if (t20BullRest <= 40 && t20BullRest % 2 === 0) return `T20 + BULL + D${t20BullRest/2}`;
+      return `T20 + BULL + ${t20BullRest}`;
+    }
+
+    // それ以外は概算
+    const t20Count = Math.floor(remaining / 60);
+    const rest = remaining % 60;
+    if (t20Count > 0) {
+      if (rest === 0) return `T20 × ${t20Count}`;
+      if (rest === 50) return `T20 × ${t20Count} + BULL`;
+      if (rest === 40) return `T20 × ${t20Count} + D20`;
+      return `T20 × ${t20Count} + ${rest}`;
+    }
+
+    return "—";
+  }
 
   function showOverlay(text, kind="normal"){
     el("ovText").textContent = text;
@@ -444,16 +536,11 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   }
 
   function takeSnapshotIfNeeded(){
-    // CANCEL用：最初の操作時点のスナップショット
     if (!snapshot){
       snapshot = {
-        startScore,
-        roundLimit,
-        mode,
-        player,
-        round,
         scores: [...scores],
         bestRemain: [...bestRemain],
+        player,
         throwN,
         turn: [...turn],
         pendingBase,
@@ -463,7 +550,9 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
         turnLowTon,
         bustThisTurn,
         finished,
-        turnStartScores: [...turnStartScores]
+        turnStartScores: [...turnStartScores],
+        startScore,
+        mode
       };
     }
   }
@@ -471,28 +560,21 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   function restoreTurn(){
     if(!snapshot) return;
 
-    startScore = snapshot.startScore;
-    roundLimit = snapshot.roundLimit;
-    mode = snapshot.mode;
-    player = snapshot.player;
-    round = snapshot.round;
-
     scores = [...snapshot.scores];
     bestRemain = [...snapshot.bestRemain];
-
+    player = snapshot.player;
     throwN = snapshot.throwN;
     turn = [...snapshot.turn];
-
     pendingBase = null;
     locked = snapshot.locked;
-
     turnSum = snapshot.turnSum;
     turnBull = snapshot.turnBull;
     turnLowTon = snapshot.turnLowTon;
     bustThisTurn = snapshot.bustThisTurn;
-
     finished = snapshot.finished;
     turnStartScores = [...snapshot.turnStartScores];
+    startScore = snapshot.startScore;
+    mode = snapshot.mode;
 
     el("cancelBtn").disabled = true;
     el("nextBtn").disabled = true;
@@ -513,42 +595,15 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     ["sBtn","dBtn","tBtn"].forEach(id=>el(id).classList.toggle("on", id===onId));
   }
 
-  function finishByRemaining(){
-    finished = true;
-    clearWinnerGlow();
-    clearBustGlow();
-
-    // 規定ラウンド終了：残り点が少ない方が勝ち（同点はDRAW）
-    if(mode === 2){
-      if(scores[0] < scores[1]){
-        el("p1Card").classList.add("winner");
-        showOverlay("TIME UP!  PLAYER 1 WINNER!");
-      }else if(scores[1] < scores[0]){
-        el("p2Card").classList.add("winner");
-        showOverlay("TIME UP!  PLAYER 2 WINNER!");
-      }else{
-        showOverlay("TIME UP!  DRAW");
-      }
-    }else{
-      // 1Pは勝敗ではなく結果表示
-      el("p1Card").classList.add("winner");
-      showOverlay(`TIME UP!  REMAIN ${scores[0]}`);
-    }
-
-    el("nextBtn").disabled = false;
-    el("nextBtn").textContent = "NEXT GAME";
-    el("cancelBtn").disabled = true;
-    update();
-  }
-
-  function finishImmediate(winnerIdx){
+  function finishGame(){
     finished = true;
     clearWinnerGlow();
     clearBustGlow();
 
     if(mode === 2){
-      el(winnerIdx === 0 ? "p1Card" : "p2Card").classList.add("winner");
-      showOverlay(`PLAYER ${winnerIdx+1} WINNER!`);
+      const winner = player;
+      el(winner === 0 ? "p1Card" : "p2Card").classList.add("winner");
+      showOverlay(`PLAYER ${winner+1} WINNER!`);
     }else{
       el("p1Card").classList.add("winner");
       showOverlay("FINISH!");
@@ -557,7 +612,6 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     el("nextBtn").disabled = false;
     el("nextBtn").textContent = "NEXT GAME";
     el("cancelBtn").disabled = true;
-    update();
   }
 
   function startNextGame(){
@@ -565,8 +619,6 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     bestRemain = [startScore, startScore];
 
     player = 0;
-    round = 1;
-
     throwN = 1;
     turn = [null,null,null];
     pendingBase = null;
@@ -592,7 +644,6 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     update();
   }
 
-  // ★ターン終了処理（手動NEXT／バースト自動送り共通）
   function endTurn(auto=false){
     if(finished){
       startNextGame();
@@ -600,7 +651,6 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     }
     if(!locked && !auto) return;
 
-    // bustは既に演出済みなので通常演出のみ
     if(!bustThisTurn){
       if(turnLowTon) showOverlay("LOW TON!!");
       else if(turnBull) showOverlay("Nice One!!");
@@ -623,27 +673,12 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     el("cancelBtn").disabled = true;
     el("nextBtn").disabled = true;
 
-    // 次プレイヤーへ
     if(mode === 2){
       player ^= 1;
-
-      // 2Pでは「P2のターン終了→次がP1」になったタイミングでラウンド+1
-      if(player === 0){
-        round++;
-      }
     }else{
-      // 1Pではターン=ラウンド
-      round++;
       player = 0;
     }
 
-    // 規定ラウンドを超えたら判定
-    if(round > roundLimit){
-      finishByRemaining();
-      return;
-    }
-
-    // 次ターン開始スナップ（バースト復帰用）
     setTurnStartSnapshot();
 
     setMultiUI("sBtn");
@@ -654,9 +689,7 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     endTurn(false);
   }
 
-  // ★バースト：演出→自動で次プレイヤーへ進む
   function bustNow(){
-    // スコアをターン開始に戻す
     scores[player] = turnStartScores[player];
     bustThisTurn = true;
 
@@ -667,7 +700,6 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     locked = true;
     pendingBase = null;
 
-    // THIS TURN表示
     turn = ["BUST", null, null];
     throwN = 4;
 
@@ -676,7 +708,6 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
     update();
 
-    // 少し間を置いて自動で次ターンへ
     setTimeout(() => {
       if(!finished){
         endTurn(true);
@@ -687,13 +718,11 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   function applyScore(val){
     const nextRemain = scores[player] - val;
 
-    // BUST：0未満になったらバースト（シングルアウトOK）
     if(nextRemain < 0){
       bustNow();
       return;
     }
 
-    // 正常反映
     scores[player] = nextRemain;
     bestRemain[player] = Math.min(bestRemain[player], scores[player]);
 
@@ -707,12 +736,11 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     pendingBase = null;
     el("cancelBtn").disabled = false;
 
-    // ぴったり0 → 即フィニッシュ（この時点で勝者は現プレイヤー）
     if(scores[player] === 0){
       locked = true;
       el("nextBtn").disabled = false;
       update();
-      finishImmediate(player);
+      finishGame();
       return;
     }
 
@@ -756,18 +784,15 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
     player = 0;
     clearWinnerGlow();
     clearBustGlow();
-    startNextGame(); // 切替時は分かりやすくリセット
+    startNextGame();
   }
 
   function setGame(score){
     startScore = score;
-    roundLimit = ROUND_LIMITS[score];
-
+    el("gameLabel").textContent = String(score);
     el("game301").classList.toggle("on", score === 301);
     el("game501").classList.toggle("on", score === 501);
-    el("game701").classList.toggle("on", score === 701);
-
-    startNextGame(); // ゲーム切替時もリセット
+    startNextGame();
   }
 
   function formatTurnCell(v){
@@ -776,11 +801,10 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   }
 
   function update(){
-    el("round").textContent = `${round} / ${roundLimit}`;
-    el("gameLabel").textContent = `GAME ${startScore}`;
-
     el("p1Score").textContent = scores[0];
     el("p2Score").textContent = scores[1];
+    el("p1Route").textContent = calculateBestRoute(scores[0]);
+    el("p2Route").textContent = calculateBestRoute(scores[1]);
     el("p1High").textContent = `BEST REMAIN : ${bestRemain[0]}`;
     el("p2High").textContent = `BEST REMAIN : ${bestRemain[1]}`;
     el("hist").textContent = turn.map(formatTurnCell).join(" ");
@@ -790,11 +814,6 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
     el("mode1").classList.toggle("on", mode===1);
     el("mode2").classList.toggle("on", mode===2);
-
-    // 1PのときはP2のactiveを消す（見た目の一貫）
-    if(mode === 1){
-      el("p2Card").classList.remove("active");
-    }
   }
 
   // ===== BUILD NUMBER GRID =====
@@ -833,7 +852,6 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
 
   el("game301").onclick = () => setGame(301);
   el("game501").onclick = () => setGame(501);
-  el("game701").onclick = () => setGame(701);
 
   el("reset").onclick = () => location.reload();
 
@@ -842,5 +860,6 @@ button:disabled{ opacity:.45; cursor:not-allowed; }
   setMultiUI("sBtn");
 })();
 </script>
+
 </body>
 </html>
